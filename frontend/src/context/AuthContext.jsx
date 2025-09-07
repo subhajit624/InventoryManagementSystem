@@ -11,7 +11,7 @@ const AuthContext = ({children}) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/frontend/me", {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/frontend/me`, {
           withCredentials: true,
         });
         setAuthUser(res.data.user);
