@@ -12,9 +12,10 @@ const Users = () => {
     address: "",
     role: "customer",
   });
+  const [loading, setLoading] = useState(false);
 
-  // Fetch Users
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/users/getAllUsers`,
@@ -23,6 +24,8 @@ const Users = () => {
       setUsers(res.data);
     } catch (error) {
       toast.error("Failed to fetch users");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,7 +33,6 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  // Add User
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -47,7 +49,6 @@ const Users = () => {
     }
   };
 
-  // Delete User
   const handleDelete = async (id) => {
     try {
       await axios.delete(
@@ -61,13 +62,17 @@ const Users = () => {
     }
   };
 
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="min-h-150 bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-6">
       <Toaster position="top-right" />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         {/* Add User Form */}
-        <div className="bg-white max-h-110 p-6 rounded-xl shadow-md">
+        <div className="bg-white h-105 p-6 rounded-xl shadow-md w-full md:w-1/3">
           <h2 className="text-xl font-semibold mb-4">Add User</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
@@ -119,64 +124,99 @@ const Users = () => {
           </form>
         </div>
 
-        {/* User List */}
-        <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
+        {/* Users List */}
+        <div className="md:w-2/3 bg-white p-6 rounded-xl shadow-md">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
             <h2 className="text-xl font-semibold">Users</h2>
             <input
               type="text"
               placeholder="Search user..."
-              className="border p-2 rounded-lg"
+              className="border p-2 rounded-lg w-full md:w-1/2"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-3 border">Name</th>
-                  <th className="p-3 border">Email</th>
-                  <th className="p-3 border">Address</th>
-                  <th className="p-3 border">Role</th>
-                  <th className="p-3 border text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users
-                  .filter((u) =>
-                    u.name.toLowerCase().includes(search.toLowerCase())
-                  )
-                  .map((u) => (
-                    <tr key={u._id} className="hover:bg-gray-50">
-                      <td className="p-3 border">{u.name}</td>
-                      <td className="p-3 border">{u.gmail}</td>
-                      <td className="p-3 border">{u.address}</td>
-                      <td className="p-3 border">
-                        <span
-                          className={`px-2 py-1 rounded-full text-sm ${
-                            u.role === "admin"
-                              ? "bg-red-100 text-red-600"
-                              : "bg-green-100 text-green-600"
-                          }`}
-                        >
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="p-3 border text-center">
-                        <button
-                          onClick={() => handleDelete(u._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg cursor-pointer"
-                        >
-                          Delete
-                        </button>
-                      </td>
+          {loading ? (
+            <div className="flex justify-center items-center h-60">
+              <p className="text-lg font-semibold">Loading...</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-auto max-h-[70vh]">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="p-3 border">Name</th>
+                      <th className="p-3 border">Email</th>
+                      <th className="p-3 border">Address</th>
+                      <th className="p-3 border">Role</th>
+                      <th className="p-3 border text-center">Action</th>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((u) => (
+                        <tr key={u._id} className="hover:bg-gray-50">
+                          <td className="p-3 border">{u.name}</td>
+                          <td className="p-3 border">{u.gmail}</td>
+                          <td className="p-3 border">{u.address}</td>
+                          <td className="p-3 border">
+                            <span
+                              className={`px-2 py-1 rounded-full text-sm ${
+                                u.role === "admin"
+                                  ? "bg-red-100 text-red-600"
+                                  : "bg-green-100 text-green-600"
+                              }`}
+                            >
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="p-3 border text-center">
+                            <button
+                              onClick={() => handleDelete(u._id)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-6 text-gray-500">
+                          No users found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4">
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((u) => (
+                    <div key={u._id} className="bg-gray-50 rounded-xl shadow p-4 border">
+                      <p><strong>Name:</strong> {u.name}</p>
+                      <p><strong>Email:</strong> {u.gmail}</p>
+                      <p><strong>Address:</strong> {u.address}</p>
+                      <p><strong>Role:</strong> {u.role}</p>
+                      <button
+                        onClick={() => handleDelete(u._id)}
+                        className="mt-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500">No users found</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
