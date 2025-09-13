@@ -120,7 +120,7 @@ const Products_Admin = () => {
           <div className="flex flex-col md:flex-row gap-6">
 
             {/* Form Section */}
-            <div className="md:w-1/3 bg-white shadow rounded-lg p-4">
+            <div className="md:w-1/3 h-100 bg-white shadow rounded-lg p-4">
               <h2 className="text-xl font-bold mb-4">
                 {editId ? "Edit Product" : "Add Product"}
               </h2>
