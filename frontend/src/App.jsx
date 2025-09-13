@@ -43,8 +43,8 @@ function App() {
         <Route path="profile" element={authUser ? <Profile /> : <Navigate to="/" />} />
       </Route>
 
-      <Route path="/signin" element={<SignIn />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/signin" element={authUser ? <Navigate to="/" /> : <SignIn />} />
+      <Route path="/register" element={authUser ? <Navigate to="/" /> : <Register />} />
     </Routes>
   );
 }
