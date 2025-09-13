@@ -8,6 +8,7 @@ const Products_Admin = () => {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,13 +18,22 @@ const Products_Admin = () => {
     supplierId: "",
   });
 
-  // Fetch all data
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [catRes, supRes, prodRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/category/getAllCategories`,{ withCredentials: true }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/supplier/getAllSuppliers`,{ withCredentials: true }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/product/getAllProducts`,{ withCredentials: true }), 
+        axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/category/getAllCategories`,
+          { withCredentials: true }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/supplier/getAllSuppliers`,
+          { withCredentials: true }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/product/getAllProducts`,
+          { withCredentials: true }
+        ),
       ]);
 
       setCategories(catRes.data.categories || []);
@@ -31,6 +41,8 @@ const Products_Admin = () => {
       setProducts(prodRes.data.products || []);
     } catch (err) {
       toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,21 +50,32 @@ const Products_Admin = () => {
     fetchData();
   }, []);
 
-  // Handle Add / Update
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editId) {
         await axios.patch(
           `${import.meta.env.VITE_BACKEND_URL}/api/product/updateProduct/${editId}`,
-          form ,{ withCredentials: true }
+          form,
+          { withCredentials: true }
         );
         toast.success("Product updated!");
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/product/addProduct`, form ,{ withCredentials: true });
+        await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/product/addProduct`,
+          form,
+          { withCredentials: true }
+        );
         toast.success("Product added!");
       }
-      setForm({ name: "", stock: "", price: "", categoryId: "", supplierId: "" });
+
+      setForm({
+        name: "",
+        stock: "",
+        price: "",
+        categoryId: "",
+        supplierId: "",
+      });
       setEditId(null);
       fetchData();
     } catch (err) {
@@ -60,11 +83,11 @@ const Products_Admin = () => {
     }
   };
 
-  // Handle Delete
   const handleDelete = async (id) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/deleteProduct/${id}` ,{ withCredentials: true }
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/deleteProduct/${id}`,
+        { withCredentials: true }
       );
       toast.success("Product deleted!");
       setProducts(products.filter((p) => p._id !== id));
@@ -73,7 +96,6 @@ const Products_Admin = () => {
     }
   };
 
-  // Handle Edit
   const handleEdit = (p) => {
     setEditId(p._id);
     setForm({
@@ -86,138 +108,206 @@ const Products_Admin = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 w-full min-h-150 mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Left Form */}
-      <div className="bg-white shadow-md rounded-lg p-6 h-110">
-        <h2 className="text-xl font-bold mb-4">
-          {editId ? "Edit Product" : "Add Product"}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Product Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full border rounded-lg p-2"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Stock"
-            value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: e.target.value })}
-            className="w-full border rounded-lg p-2"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Price"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-            className="w-full border rounded-lg p-2"
-            required
-          />
+    <div className="p-4 bg-gray-100 min-h-screen">
+      <div className="max-w-7xl mx-auto">
 
-          {/* Category Dropdown */}
-          <select
-            value={form.categoryId}
-            onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            className="w-full border rounded-lg p-2"
-            required
-          >
-            <option value="">Select Category</option>
-            {categories.length > 0 ? (
-              categories.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No categories available</option>
-            )}
-          </select>
+        {loading ? (
+          <div className="flex justify-center items-center h-60">
+            <p className="text-lg font-semibold">Loading...</p>
+          </div>
+        ) : (
+          
+          <div className="flex flex-col md:flex-row gap-6">
 
-          {/* Supplier Dropdown */}
-          <select
-            value={form.supplierId}
-            onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-            className="w-full border rounded-lg p-2"
-            required
-          >
-            <option value="">Select Supplier</option>
-            {suppliers.length > 0 ? (
-              suppliers.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No suppliers available</option>
-            )}
-          </select>
+            {/* Form Section */}
+            <div className="md:w-1/3 bg-white shadow rounded-lg p-4">
+              <h2 className="text-xl font-bold mb-4">
+                {editId ? "Edit Product" : "Add Product"}
+              </h2>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 cursor-pointer rounded-lg"
-          >
-            {editId ? "Update" : "Add"}
-          </button>
-        </form>
-      </div>
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4 flex flex-col"
+              >
+                <input
+                  type="text"
+                  placeholder="Product Name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({ ...form, name: e.target.value })
+                  }
+                  className="w-full border rounded p-2"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Stock"
+                  value={form.stock}
+                  onChange={(e) =>
+                    setForm({ ...form, stock: e.target.value })
+                  }
+                  className="w-full border rounded p-2"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm({ ...form, price: e.target.value })
+                  }
+                  className="w-full border rounded p-2"
+                  required
+                />
 
-      {/* Right Table */}
-      <div className="md:col-span-2 bg-white shadow-md rounded-lg p-6">
-        <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-bold">Products</h2>
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border rounded-lg p-2"
-          />
-        </div>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-2 border">Name</th>
-              <th className="p-2 border">Stock</th>
-              <th className="p-2 border">Price</th>
-              <th className="p-2 border">Category</th>
-              <th className="p-2 border">Supplier</th>
-              <th className="p-2 border">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products
-              .filter((p) =>
-                p.name.toLowerCase().includes(search.toLowerCase())
-              )
-              .map((p) => (
-                <tr key={p._id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{p.name}</td>
-                  <td className="p-2">{p.stock}</td>
-                  <td className="p-2">₹{p.price}</td>
-                  <td className="p-2">{p.category?.name}</td>
-                  <td className="p-2">{p.supplier?.name}</td>
-                  <td className="p-2 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="bg-yellow-500 text-white px-3 cursor-pointer py-1 rounded"
+                <select
+                  value={form.categoryId}
+                  onChange={(e) =>
+                    setForm({ ...form, categoryId: e.target.value })
+                  }
+                  className="w-full border rounded p-2"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.length > 0 ? (
+                    categories.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No categories available</option>
+                  )}
+                </select>
+
+                <select
+                  value={form.supplierId}
+                  onChange={(e) =>
+                    setForm({ ...form, supplierId: e.target.value })
+                  }
+                  className="w-full border rounded p-2"
+                  required
+                >
+                  <option value="">Select Supplier</option>
+                  {suppliers.length > 0 ? (
+                    suppliers.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No suppliers available</option>
+                  )}
+                </select>
+
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white py-2 rounded cursor-pointer"
+                >
+                  {editId ? "Update" : "Add"}
+                </button>
+              </form>
+            </div>
+
+            {/* Products Section */}
+            <div className="md:w-2/3 bg-white shadow rounded-lg p-4 flex flex-col">
+              <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
+                <h2 className="text-xl font-bold">Products</h2>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="border rounded p-2 w-full sm:w-auto"
+                />
+              </div>
+
+              {/* Table (Desktop) */}
+              <div className="hidden md:block overflow-auto max-h-[60vh]">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100 text-left">
+                      <th className="p-2 border">Name</th>
+                      <th className="p-2 border">Stock</th>
+                      <th className="p-2 border">Price</th>
+                      <th className="p-2 border">Category</th>
+                      <th className="p-2 border">Supplier</th>
+                      <th className="p-2 border">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {products
+                      .filter((p) =>
+                        p.name.toLowerCase().includes(search.toLowerCase())
+                      )
+                      .map((p) => (
+                        <tr
+                          key={p._id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="p-2">{p.name}</td>
+                          <td className="p-2">{p.stock}</td>
+                          <td className="p-2">₹{p.price}</td>
+                          <td className="p-2">{p.category?.name}</td>
+                          <td className="p-2">{p.supplier?.name}</td>
+                          <td className="p-2 flex gap-2">
+                            <button
+                              onClick={() => handleEdit(p)}
+                              className="bg-yellow-500 text-white px-3 py-1 rounded cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(p._id)}
+                              className="bg-red-600 text-white px-3 py-1 rounded cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards (Mobile) */}
+              <div className="md:hidden space-y-4 overflow-auto max-h-[60vh]">
+                {products
+                  .filter((p) =>
+                    p.name.toLowerCase().includes(search.toLowerCase())
+                  )
+                  .map((p) => (
+                    <div
+                      key={p._id}
+                      className="border rounded-lg p-4 bg-gray-50"
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p._id)}
-                      className="bg-red-600 text-white cursor-pointer px-3 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+                      <p><strong>Name:</strong> {p.name}</p>
+                      <p><strong>Stock:</strong> {p.stock}</p>
+                      <p><strong>Price:</strong> ₹{p.price}</p>
+                      <p><strong>Category:</strong> {p.category?.name}</p>
+                      <p><strong>Supplier:</strong> {p.supplier?.name}</p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={() => handleEdit(p)}
+                          className="bg-yellow-500 text-white px-3 py-1 rounded cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p._id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+          </div>
+        )}
       </div>
     </div>
   );
