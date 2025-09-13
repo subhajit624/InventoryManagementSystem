@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import axios from "axios";
 import {
   ShoppingBag,
@@ -23,9 +23,11 @@ import {
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const prodRes = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/product/getAllProducts`,
@@ -39,17 +41,28 @@ const Dashboard = () => {
         setOrders(orderRes.data.orders || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
+  // === Loading Spinner ===
+  if (loading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+        <p className="mt-4 text-gray-600 font-medium">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   // === Calculations ===
   const totalProducts = products.length;
   const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
 
-  // ✅ Local date (fix for showing today's order correctly)
-  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
+  const today = new Date().toLocaleDateString("en-CA");
   const ordersToday = orders.filter((o) => {
     const orderDate = new Date(o.createdAt).toLocaleDateString("en-CA");
     return orderDate === today;
@@ -67,7 +80,6 @@ const Dashboard = () => {
 
   const outOfStockProducts = products.filter((p) => p.stock === 0);
 
-  // Sales count per product
   const productSales = {};
   orders.forEach((order) => {
     order.products.forEach((item) => {
@@ -83,10 +95,9 @@ const Dashboard = () => {
 
   const lowStockProducts = products.filter((p) => p.stock > 0 && p.stock <= 5);
 
-  // Orders per day (line chart)
   const ordersByDate = {};
   orders.forEach((order) => {
-    const date = new Date(order.createdAt).toLocaleDateString("en-CA"); // ✅ Local date
+    const date = new Date(order.createdAt).toLocaleDateString("en-CA");
     ordersByDate[date] = (ordersByDate[date] || 0) + 1;
   });
 
@@ -95,7 +106,6 @@ const Dashboard = () => {
     count,
   }));
 
-  // === Card Component ===
   const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className={`rounded-2xl p-6 shadow-md text-white ${color}`}>
       <div className="flex items-center justify-between">
