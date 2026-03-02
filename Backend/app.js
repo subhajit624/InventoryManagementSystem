@@ -27,6 +27,9 @@ app.use(cookieParser());
 
 
 // routes
+app.get("/", (req, res) => {
+  res.send("Server is working fine ");
+});
 app.use('/api/users',userRoutes);
 app.use('/api/category',categoryRoutes);
 app.use('/api/supplier',supplierRoutes);
